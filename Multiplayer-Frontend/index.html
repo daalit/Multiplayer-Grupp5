@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Realtime Grid</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="script.js" defer></script>
+  <style>
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15, 30px);
+      gap: 2px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background: lightgray;
+      border: 1px solid #aaa;
+      cursor: pointer;
+    }
+    .active {
+      background: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Färg Spel</h1>
+  <div id="grid"></div>
+</body>
+</html>
