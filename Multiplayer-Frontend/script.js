@@ -30,12 +30,35 @@ function renderGrid() {
 stompClient.connect({}, (frame) => {
   console.log("Connected:", frame);
 
+
+    //koppla start-knappen
+    document.getElementById("startBtn").addEventListener("click", () => {
+        stompClient.send("/app/start", {}, ""); // triggar GameController startgame()
+    })
+
   // Lyssna på grid updates
   stompClient.subscribe("/topic/grid", (message) => {
     const data = JSON.parse(message.body);
     gridState[data.row][data.col] = data.color;
     renderGrid();
   });
+
+
+
+  // Lyssna på start/slut
+    stompClient.subscribe("/topic/game", (message) => {
+        const data = JSON.parse(message.body);
+
+        if (data.type === "roundStart") {
+            document.getElementById("status").innerText =
+                "Spelet startade! Slutar kl: " + new Date(data.roundEndsAt).toLocaleTimeString();
+        }
+
+        if (data.type === "roundEnd") {
+            document.getElementById("status").innerText =
+                "Rundan slut!  Vinnare";
+        }
+    });
 
   // Lyssna på player-assignments
   stompClient.subscribe("/topic/players", (message) => {
