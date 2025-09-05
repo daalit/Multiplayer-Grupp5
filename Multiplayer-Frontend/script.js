@@ -3,11 +3,13 @@ const stompClient = Stomp.over(socket);
 
 const gridElement = document.getElementById("grid");
 let playerColor = null;
+let gameRunning = false; // för att veta om spelet är startat eller inte -
 
 const gridState = Array.from({ length: 15 }, () => Array(15).fill("null"));
 
 function renderGrid() {
   gridElement.innerHTML = "";
+
   for (let row = 0; row < 15; row++) {
     for (let col = 0; col < 15; col++) {
       let cell = document.createElement("div");
@@ -16,6 +18,11 @@ function renderGrid() {
         cell.style.background = gridState[row][col];
       }
       cell.addEventListener("click", () => {
+
+          if (!gameRunning) { // går ej starta om gameRunning inte är true 
+              alert("Du kan inte klicka förrän spelet är startat!");
+              return;
+          }
         if (playerColor) {
           stompClient.send("/app/grid", {}, JSON.stringify({ row, col, color: playerColor }));
         } else {
@@ -50,11 +57,21 @@ stompClient.connect({}, (frame) => {
         const data = JSON.parse(message.body);
 
         if (data.type === "roundStart") {
+            gameRunning = true; // Spelet körs
+            for(r = 0; r < 15; r++) {
+                for (c = 0; c < 15; c++) {
+                    gridState[r][c] = null;
+                }
+            }
+            renderGrid();
+
             document.getElementById("status").innerText =
-                "Spelet startade! Slutar kl: " + new Date(data.roundEndsAt).toLocaleTimeString();
+                "Spelet startat! "
         }
 
+
         if (data.type === "roundEnd") {
+            gameRunning = false; // spelet har avslutats
             document.getElementById("status").innerText =
                 "Rundan slut!  Vinnare";
         }

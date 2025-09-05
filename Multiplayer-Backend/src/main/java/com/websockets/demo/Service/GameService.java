@@ -36,6 +36,11 @@ public class GameService {
             }
         }
 
+        messagingService.broadcast(Map.of(
+                "type", "gridReset",
+                "grid", grid
+        ));
+
         //uppdatera status
         phase = "running";
         roundEndsAt = System.currentTimeMillis() + roundMs;  // nuvarande klockslag i millisekunder från 1970-01-01 - detta hjälper oss att veta när spelet ska avlutas från när de startat.
@@ -44,7 +49,7 @@ public class GameService {
         // där av behöver vi delegera den istället
 
         messagingService.broadcast(new Message("roundStart", Map.of(
-                "roudEndsAt", roundEndsAt,
+                "roundEndsAt", roundEndsAt,
                 "now", System.currentTimeMillis()
         )));
 
