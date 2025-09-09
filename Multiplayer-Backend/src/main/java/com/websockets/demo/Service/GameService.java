@@ -17,9 +17,28 @@ public class GameService {
     private final String[][] grid = new String[gridSize][gridSize]; // Varje cell innehåller en fräg (String) eller null om rutan är rom:
     private String phase = "lobby";
     private Long roundEndsAt = null;
+    private boolean testMode = false; // används bara i tester
 
     @Autowired
-    private MessagingService messagingService;
+    public MessagingService messagingService;
+
+    // GETTER för tester
+    public String getPhase() {
+        return phase;
+    }
+
+    public Long getRoundEndsAt() {
+        return roundEndsAt;
+    }
+
+    public String[][] getGrid() {
+        return grid;
+    }
+
+    //  sätt testMode från tester
+    public void setTestMode(boolean testMode) {
+        this.testMode = testMode;
+    }
 
 
     //Starta en ny spelrunda
@@ -47,7 +66,6 @@ public class GameService {
 
         // Skicka startmeddelande till klienten // GameSerivce kan inte själv direkt prata med WebSocket-anslutningen
         // där av behöver vi delegera den istället
-
         messagingService.broadcast(new Message("roundStart", Map.of(
                 "roundEndsAt", roundEndsAt,
                 "now", System.currentTimeMillis()
@@ -55,18 +73,19 @@ public class GameService {
 
 
         // Thread --> låter spelet köra i 30 sekunder innan vi kör metoden endGame - Thread "sover" i 30 sekunder innan den kör endGame
-        new Thread(() -> {
-            try {
-                Thread.sleep(roundMs); // vänta 30 sekunder
-                endGame(); // kör metoden endGame();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }).start();
-
+       if (!testMode) {
+           new Thread(() -> {
+               try {
+                   Thread.sleep(roundMs); // vänta 30 sekunder
+                   endGame(); // kör metoden endGame();
+               } catch (InterruptedException e) {
+                   Thread.currentThread().interrupt();
+               }
+           }).start();
+       }
     }
 
-    private void endGame() {
+    public void endGame() {
         phase = "ended";
 
         // TODO: Räkna vinnare baserat på antal rutor
