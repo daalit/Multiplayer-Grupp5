@@ -76,8 +76,21 @@ stompClient.connect({}, (frame) => {
 
     //koppla start-knappen
     document.getElementById("startBtn").addEventListener("click", () => {
-        stompClient.send("/app/start", {}, ""); // triggar GameController startgame()
-    })
+    let countdown = 5;
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = `Spelet startar om ${countdown}...`;
+
+    const interval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            statusEl.innerText = `Spelet startar om ${countdown}...`;
+        } else {
+            clearInterval(interval);
+            statusEl.innerText = "Spelet startar!";
+            stompClient.send("/app/start", {}, ""); // triggar GameController startgame()
+        }
+    }, 1000);
+});
 
   // Lyssna på grid updates
   stompClient.subscribe("/topic/grid", (message) => {
@@ -102,7 +115,8 @@ stompClient.connect({}, (frame) => {
             renderGrid();
 
             document.getElementById("status").innerText =
-                "Spelet startat! "
+                "Spelet startat! ";
+                document.getElementById("startBtn").textContent = "Restart";
         }
 
 
@@ -110,6 +124,7 @@ stompClient.connect({}, (frame) => {
             gameRunning = false; // spelet har avslutats
             document.getElementById("status").innerText =
                 "Rundan slut!  Vinnare";
+                document.getElementById("startBtn").textContent = "Starta spel";
         }
     });
 
