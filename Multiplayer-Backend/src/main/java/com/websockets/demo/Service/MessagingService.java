@@ -14,8 +14,13 @@ public class MessagingService {
         this.template = template;
     }
 
-    //skicka till alla klienter som Lyssnar på /topic/game
-    public  void broadcast(Object message) {
+    // skicka till alla klienter som Lyssnar på /topic/game
+    public void broadcast(Object message) {
         template.convertAndSend("/topic/game", message);
     }
+
+    public void broadcast(String topic, Object message) {
+        template.convertAndSend(topic, message);
+    }
+
 }

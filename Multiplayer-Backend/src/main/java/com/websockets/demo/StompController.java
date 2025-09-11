@@ -1,54 +1,88 @@
 package com.websockets.demo;
 
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
-import java.util.*;
+import com.websockets.demo.Service.GameManager;
+import com.websockets.demo.Service.GameSession;
+import com.websockets.demo.Service.MessagingService;
 
 @Controller
 public class StompController {
 
-    private final List<String> colors = Arrays.asList("red", "green", "yellow", "blue");
-    private final Map<String, String> playerColors = new HashMap<>();
-    private final Map<String, Integer> scores = new HashMap<>();
-    private final String[][] grid = new String[15][15]; // sparar vilken färg varje cell har
+    @Autowired
+    private GameManager gameManager;
+
+    @Autowired
+    private MessagingService messagingService;
+
+    // En spelare går med i spel och får en färg och ett sessionId
 
     @MessageMapping("/join")
-    @SendTo("/topic/players")
-    public PlayerAssignment join(String sessionId) {
-        if (!playerColors.containsKey(sessionId) && playerColors.size() < colors.size()) {
-            String color = colors.get(playerColors.size());
-            playerColors.put(sessionId, color);
-            scores.put(color, 0);
-        }
-        return new PlayerAssignment(sessionId, playerColors.get(sessionId));
+    @SendToUser("/topic/players")
+    public PlayerAssignment join(@Header("simpSessionId") String simpSessionId) {
+        // Lägger till spelaren i en session
+        GameSession session = gameManager.assignPlayerToSession(simpSessionId);
+
+        // Hämtar spelarens färg
+        String color = session.getPlayers().get(simpSessionId);
+
+        // Skickar ut antalet spelare i sessionen
+        messagingService.broadcast(
+                "/topic/session/" + session.getSessionId() + "/players",
+                Map.of("playerCount", session.getPlayers().size()));
+
+        // Skickar tillbaka spelarens färg och sessionId
+        return new PlayerAssignment(session.getSessionId(), color);
     }
 
-    @MessageMapping("/grid")
-    @SendTo("/topic/grid")
-    public GridMessage handleGrid(GridMessage message) {
-        int row = message.getRow();
-        int col = message.getCol();
-        String newColor = message.getColor();
-        String oldColor = grid[row][col];
-
-        // Uppdatera poäng
-        if (oldColor != null && scores.containsKey(oldColor)) {
-            scores.put(oldColor, scores.get(oldColor) - 1);
+    // Uppdaterar cellerna på spelplanen
+    @MessageMapping("/grid/{gameId}")
+    public void handleGrid(@DestinationVariable String gameId, GridMessage message) {
+        GameSession session = gameManager.getSession(gameId);
+        if (session != null) {
+            session.updateCell(message.getRow(), message.getCol(), message.getColor());
+            messagingService.broadcast("/topic/grid/" + gameId, message);
+            messagingService.broadcast("/topic/scores/" + gameId, new ScoreUpdate(session.getScores()));
         }
-        if (newColor != null && scores.containsKey(newColor)) {
-            scores.put(newColor, scores.get(newColor) + 1);
-        }
-
-        grid[row][col] = newColor;
-
-        return message; // skickas till alla som grid update
     }
 
-    @MessageMapping("/scores")
-    @SendTo("/topic/scores")
-    public ScoreUpdate getScores() {
-        return new ScoreUpdate(scores);
+    // Startar en ny runda
+
+    @MessageMapping("/start/{gameId}")
+    public void startGame(@DestinationVariable String gameId) {
+        GameSession session = gameManager.getSession(gameId);
+        if (session != null && !"running".equals(session.getPhase())) {
+            session.startRound(30000); // 30 seconds
+            messagingService.broadcast("/topic/game/" + gameId, Map.of(
+                    "type", "roundStart",
+                    "roundEndsAt", session.getRoundEndsAt()));
+
+            new Thread(() -> {
+                try {
+                    Thread.sleep(30000);
+                    session.endRound();
+                    messagingService.broadcast("/topic/game/" + gameId, Map.of(
+                            "type", "roundEnd"));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        }
+    }
+
+    // Hämtar poängen för en session
+    @MessageMapping("/scores/{gameId}")
+    public void getScores(@DestinationVariable String gameId) {
+        GameSession session = gameManager.getSession(gameId);
+        if (session != null) {
+            messagingService.broadcast("/topic/scores/" + gameId, new ScoreUpdate(session.getScores()));
+        }
     }
 }
