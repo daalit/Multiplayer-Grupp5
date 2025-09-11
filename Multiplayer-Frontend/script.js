@@ -77,9 +77,35 @@ function renderScores() {
 stompClient.connect({}, (frame) => {
   console.log("Connected:", frame);
 
+
+    //koppla start-knappen
+    document.getElementById("startBtn").addEventListener("click", () => {
+    let countdown = 5;
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = `Spelet startar om ${countdown}...`;
+
+    const interval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            statusEl.innerText = `Spelet startar om ${countdown}...`;
+        } else {
+            clearInterval(interval);
+            statusEl.innerText = "Spelet startar!";
+            stompClient.send("/app/start", {}, ""); // triggar GameController startgame()
+        }
+    }, 1000);
+});
+
+  // Lyssna på grid updates
+  stompClient.subscribe("/topic/grid", (message) => {
+    const data = JSON.parse(message.body);
+    gridState[data.row][data.col] = data.color;
+    renderGrid();
+
   // Knappen för att gå med i spel
   document.getElementById("joinBtn").addEventListener("click", () => {
     stompClient.send("/app/join", {}, {});
+
   });
 
   // Hanterar spelares tilldelning (session och färg)
@@ -106,15 +132,24 @@ stompClient.connect({}, (frame) => {
       renderGrid();
     });
 
+
+            document.getElementById("status").innerText =
+                "Spelet startat! ";
+                document.getElementById("startBtn").textContent = "Restart";
+        }
+
     // Lyssnar på poängens uppdateringar
     stompClient.subscribe(`/topic/scores/${gameId}`, (msg) => {
       scores = JSON.parse(msg.body).scores;
       renderScores();
     });
 
+
     // Lyssnar på spelens uppdateringar
     stompClient.subscribe(`/topic/game/${gameId}`, (msg) => {
       const data = JSON.parse(msg.body);
+
+                
 
       if (data.type === "roundStart") {
         gameRunning = true;
@@ -122,6 +157,7 @@ stompClient.connect({}, (frame) => {
           for (let c = 0; c < 15; c++) {
             gridState[r][c] = null;
           }
+
         }
         renderGrid();
         document.getElementById("status").innerText = "Game started!";
@@ -130,6 +166,7 @@ stompClient.connect({}, (frame) => {
       if (data.type === "roundEnd") {
         gameRunning = false;
         document.getElementById("status").innerText = "Round ended!";
+        document.getElementById("startBtn").textContent = "Starta spel";
       }
     });
 
