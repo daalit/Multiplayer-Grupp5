@@ -5,15 +5,15 @@ const gridElement = document.getElementById("grid");
 const scoreList = document.getElementById("scoreList");
 
 let playerColor = null;
+let gameId = null; // sessionId
+let gameRunning = false;
 
 const gridState = Array.from({ length: 15 }, () => Array(15).fill(null));
 let scores = {};
 
-let gameRunning = false; // för att veta om spelet är startat eller inte -
-
-
 const TOTAL_CELLS = 15 * 15;
 
+// Renderar spelplanen
 function renderGrid() {
   gridElement.innerHTML = "";
 
@@ -25,16 +25,19 @@ function renderGrid() {
         cell.style.background = gridState[row][col];
       }
       cell.addEventListener("click", () => {
-
-          if (!gameRunning) { // går ej starta om gameRunning inte är true 
-              alert("Du kan inte klicka förrän spelet är startat!");
-              return;
-          }
-        if (playerColor) {
-          stompClient.send("/app/grid", {}, JSON.stringify({ row, col, color: playerColor }));
-          stompClient.send("/app/scores", {}); // be om uppdatering
+        if (!gameRunning) {
+          alert("You can’t click until the game has started!");
+          return;
+        }
+        if (playerColor && gameId) {
+          stompClient.send(
+            `/app/grid/${gameId}`,
+            {},
+            JSON.stringify({ row, col, color: playerColor })
+          );
+          stompClient.send(`/app/scores/${gameId}`, {});
         } else {
-          alert("Du har inte blivit tilldelad en färg ännu!");
+          alert("You don’t have a color yet!");
         }
       });
       gridElement.appendChild(cell);
@@ -42,6 +45,7 @@ function renderGrid() {
   }
 }
 
+// Renderar poängen
 function renderScores() {
   scoreList.innerHTML = "";
   Object.entries(scores).forEach(([color, points]) => {
@@ -97,55 +101,85 @@ stompClient.connect({}, (frame) => {
     const data = JSON.parse(message.body);
     gridState[data.row][data.col] = data.color;
     renderGrid();
+
+  // Knappen för att gå med i spel
+  document.getElementById("joinBtn").addEventListener("click", () => {
+    stompClient.send("/app/join", {}, {});
+
   });
 
+  // Hanterar spelares tilldelning (session och färg)
+  stompClient.subscribe("/user/topic/players", (message) => {
+    const assignment = JSON.parse(message.body);
+    gameId = assignment.sessionId;
+    playerColor = assignment.color;
 
+    alert("You were assigned color: " + playerColor.toUpperCase());
+    document.getElementById("joinBtn").style.display = "none";
 
-  // Lyssna på start/slut
-    stompClient.subscribe("/topic/game", (message) => {
-        const data = JSON.parse(message.body);
+    // Lyssnar på sessionens uppdateringar
+    stompClient.subscribe(`/topic/session/${gameId}/players`, (msg) => {
+      const payload = JSON.parse(msg.body);
+      if (payload.playerCount >= 2) {
+        document.getElementById("startBtn").style.display = "block";
+      }
+    });
 
-        if (data.type === "roundStart") {
-            gameRunning = true; // Spelet körs
-            for(r = 0; r < 15; r++) {
-                for (c = 0; c < 15; c++) {
-                    gridState[r][c] = null;
-                }
-            }
-            renderGrid();
+    // Lyssnar på spelplanens uppdateringar
+    stompClient.subscribe(`/topic/grid/${gameId}`, (msg) => {
+      const data = JSON.parse(msg.body);
+      gridState[data.row][data.col] = data.color;
+      renderGrid();
+    });
+
 
             document.getElementById("status").innerText =
                 "Spelet startat! ";
                 document.getElementById("startBtn").textContent = "Restart";
         }
 
-
-        if (data.type === "roundEnd") {
-            gameRunning = false; // spelet har avslutats
-            document.getElementById("status").innerText =
-                "Rundan slut!  Vinnare";
-                document.getElementById("startBtn").textContent = "Starta spel";
-        }
+    // Lyssnar på poängens uppdateringar
+    stompClient.subscribe(`/topic/scores/${gameId}`, (msg) => {
+      scores = JSON.parse(msg.body).scores;
+      renderScores();
     });
 
-  // Lyssna på player-assignments
-  stompClient.subscribe("/topic/players", (message) => {
-    const data = JSON.parse(message.body);
-    if (!playerColor && data.sessionId === stompClient.ws._transport.url) {
-      playerColor = data.color;
-      alert("Du fick färgen: " + playerColor.toUpperCase());
+
+    // Lyssnar på spelens uppdateringar
+    stompClient.subscribe(`/topic/game/${gameId}`, (msg) => {
+      const data = JSON.parse(msg.body);
+
+                
+
+      if (data.type === "roundStart") {
+        gameRunning = true;
+        for (let r = 0; r < 15; r++) {
+          for (let c = 0; c < 15; c++) {
+            gridState[r][c] = null;
+          }
+
+        }
+        renderGrid();
+        document.getElementById("status").innerText = "Game started!";
+      }
+
+      if (data.type === "roundEnd") {
+        gameRunning = false;
+        document.getElementById("status").innerText = "Round ended!";
+        document.getElementById("startBtn").textContent = "Starta spel";
+      }
+    });
+
+    // Hämtar poängen
+    stompClient.send(`/app/scores/${gameId}`, {});
+  });
+
+  // Knappen för att starta spel
+  document.getElementById("startBtn").addEventListener("click", () => {
+    if (gameId) {
+      stompClient.send(`/app/start/${gameId}`, {});
     }
   });
-
-  // Lyssna på poäng
-  stompClient.subscribe("/topic/scores", (message) => {
-    scores = JSON.parse(message.body).scores;
-    renderScores();
-  });
-
-  // Skicka join request
-  stompClient.send("/app/join", {}, stompClient.ws._transport.url);
-  stompClient.send("/app/scores", {}); // hämta första scorelistan
 
   renderGrid();
 });
