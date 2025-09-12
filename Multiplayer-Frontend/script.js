@@ -127,9 +127,18 @@ stompClient.connect({}, (frame) => {
         document.getElementById("status").innerText = "Game started!";
       }
 
-      if (data.type === "roundEnd") {
+      if (data.type === "roundEnd") {console.log("roundEnd data", data);
         gameRunning = false;
         document.getElementById("status").innerText = "Round ended!";
+        document.getElementById("winner").hidden = false;
+        const elementWinner = document.getElementById("winnerPlayer");
+        const elemetWinnerScore = document.getElementById("winnerScore");
+
+        elementWinner.innerText = "Vinnare: " + data.winner;
+        elemetWinnerScore.innerText = "Poäng: " + data.scores[data.winner];
+
+
+
       }
     });
 
