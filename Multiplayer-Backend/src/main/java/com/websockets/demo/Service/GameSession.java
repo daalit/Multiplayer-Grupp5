@@ -20,6 +20,14 @@ public class GameSession {
 
     private final List<String> colors = Arrays.asList("red", "green", "yellow", "blue");
 
+    public void setPhase(String phase) {
+        this.phase = phase;
+    }
+
+    public void setRoundEndsAt(long roundEndsAt) {
+        this.roundEndsAt = roundEndsAt;
+    }
+
     // Konstruktor för att skapa en ny session
     public GameSession(String sessionId) {
         this.sessionId = sessionId;

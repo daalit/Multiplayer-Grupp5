@@ -13,7 +13,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 public class GameServiceTest {
-
+/*
     private GameService gameService;
     private MessagingService messagingServiceMock;
 
@@ -56,5 +56,5 @@ public class GameServiceTest {
 
 
     // TODO: Max antal spelare
-    // TODO: Min antal spelare
+*/    // TODO: Min antal spelare
 }

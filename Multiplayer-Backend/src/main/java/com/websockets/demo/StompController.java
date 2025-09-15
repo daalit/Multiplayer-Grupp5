@@ -2,6 +2,7 @@ package com.websockets.demo;
 
 import java.util.Map;
 
+import com.websockets.demo.Service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
@@ -21,6 +22,8 @@ public class StompController {
 
     @Autowired
     private MessagingService messagingService;
+    @Autowired
+    private GameService gameService;
 
     // En spelare går med i spel och får en färg och ett sessionId
 
@@ -57,24 +60,7 @@ public class StompController {
 
     @MessageMapping("/start/{gameId}")
     public void startGame(@DestinationVariable String gameId) {
-        GameSession session = gameManager.getSession(gameId);
-        if (session != null && !"running".equals(session.getPhase())) {
-            session.startRound(30000); // 30 seconds
-            messagingService.broadcast("/topic/game/" + gameId, Map.of(
-                    "type", "roundStart",
-                    "roundEndsAt", session.getRoundEndsAt()));
-
-            new Thread(() -> {
-                try {
-                    Thread.sleep(30000);
-                    session.endRound();
-                    messagingService.broadcast("/topic/game/" + gameId, Map.of(
-                            "type", "roundEnd"));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }).start();
-        }
+        gameService.startGame(gameId);
     }
 
     // Hämtar poängen för en session
