@@ -59,7 +59,19 @@ public class GameServiceTest {
         // verifiera att boradvast anropades
         verify(messagingServiceMock, atLeastOnce()).broadcast(anyString(), any());
     }
+    
+   @Test
+    void shouldNotStartGameIfSessionNotFound(){
 
+        String nonExistentGameId = "no-game-id";
+        when(gameManagerMock.getSession(nonExistentGameId)).thenReturn(null);
+        injectGameManager();
+        
+        gameService.startGame(nonExistentGameId);
+        
+        //Verifiera så ingen data skickas
+        verify(messagingServiceMock, Mockito.never()).broadcast(anyString(), any());
+}
     @Test
     void shouldEndGameAndCalculateScores(){        
         when(gameManagerMock.getSession(testGameId)).thenReturn(gameSession);
@@ -69,20 +81,17 @@ public class GameServiceTest {
         String player1Color = gameSession.assignPlayer("player1");
         String player2Color = gameSession.assignPlayer("player2");
         
-
         gameService.startGame(testGameId);
 
         //kolla att phase ändras
         assertEquals("running", gameSession.getPhase());
         
         //Lägger till rutor/poäng för spelarna. 
-        gameSession.updateCell(0, 0, player1Color);
-        gameSession.updateCell(0, 1, player1Color);
-        gameSession.updateCell(0, 2, player1Color);
+        gameSession.updateCell(0, 0, player1Color); //RÖD (1-0)
+        gameSession.updateCell(0, 1, player1Color); //RÖD (2-0)
+        gameSession.updateCell(0, 2, player1Color); //RÖD (3-0)
 
-        gameSession.updateCell(0, 2, player2Color);
-       
-
+        gameSession.updateCell(0, 2, player2Color); // GRÖN SKRIVER ÖVER RÖD. (2-1)    
 
         //Avslutar spelet och kollar att det avslutats. 
         gameService.endGame(testGameId);
@@ -92,6 +101,7 @@ public class GameServiceTest {
         assertEquals("{red=2, green=1}", gameSession.getScores().toString());
         verify(messagingServiceMock, atLeastOnce()).broadcast(anyString(), any());    
 }
+
 
 
     private void injectGameManager(){
@@ -106,20 +116,5 @@ public class GameServiceTest {
 
     }
 
-    // test 2 spelet ska ej kunna startas på nytt när de redan är startat
-   /*  @Test
-    void shouldNotBeAbleToStartGameIfAlreadyRunning(){
-        gameService.startGame();
-        Long firstRoundEndsAt = gameService.getRoundEndsAt();
 
-        //Försök starta igen
-        gameService.startGame();
-
-        // samma timestamp == nytt spel startade inte
-        assertEquals(firstRoundEndsAt, gameService.getRoundEndsAt());
-    }
- */
-
-    // TODO: Max antal spelare
-    // TODO: Min antal spelare
 }
