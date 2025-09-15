@@ -4,6 +4,8 @@ const stompClient = Stomp.over(socket);
 const gridElement = document.getElementById("grid");
 const scoreList = document.getElementById("scoreList");
 
+let timerInterval = null;
+
 let playerColor = null;
 let gameId = null; // sessionId
 let gameRunning = false;
@@ -43,6 +45,34 @@ function renderGrid() {
       gridElement.appendChild(cell);
     }
   }
+}
+
+function startTimer(endTime) {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+    
+  timerInterval = setInterval(() => {
+    const now = Date.now();
+    const timeLeft = Math.max(0, endTime - now);
+    
+    if (timeLeft <= 0) {
+      timer.innerHTML = "<h2>Tid: 0s</h2>";
+      clearInterval(timerInterval);
+      return;
+    }
+    
+    const seconds = Math.ceil(timeLeft / 1000);
+    timer.innerHTML = `<h2>Tid: ${seconds}s</h2>`;
+  }, 100);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  timer.innerHTML = "<h2>Tid: Round ended!</h2>";
 }
 
 // Renderar poängen
@@ -125,20 +155,23 @@ stompClient.connect({}, (frame) => {
         }
         renderGrid();
         document.getElementById("status").innerText = "Game started!";
+
+        startTimer(data.roundEndsAt);
       }
 
       if (data.type === "roundEnd") {console.log("roundEnd data", data);
         gameRunning = false;
         document.getElementById("status").innerText = "Round ended!";
+                                     
+        stopTimer();        
+
         document.getElementById("winner").hidden = false;
         const elementWinner = document.getElementById("winnerPlayer");
         const elemetWinnerScore = document.getElementById("winnerScore");
 
         elementWinner.innerText = "Vinnare: " + data.winner;
-        elemetWinnerScore.innerText = "Poäng: " + data.scores[data.winner];
-
-
-
+        elemetWinnerScore.innerText = "Poäng: " + data.scores[data.winner];     
+        
       }
     });
 
