@@ -1,83 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <title>Realtime Grid Game</title>
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-  <script src="script.js" defer></script>
-  <style>
-    body {
-      display: flex;
-      gap: 40px;
-      font-family: Arial, sans-serif;
-    }
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(15, 30px);
-      grid-template-rows: repeat(15, 30px);
-      gap: 2px;
-      margin-top: 20px;
-    }
-    .cell {
-      width: 30px;
-      height: 30px;
-      background: lightgray;
-      border: 1px solid #aaa;
-      cursor: pointer;
-    }
-    #scores {
-      margin-top: 20px;
-      width: 200px;
-    }
-    #scores h2 {
-      margin-bottom: 15px;
-    }
-    .score-entry {
-      margin: 10px 0;
-    }
-    .score-label {
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      background: #eee;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Realtime Grid Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div>
-    <h1>Färg Spel</h1>
-    <div id="grid"></div>
-  </div>
+<div class="container">
 
-  <div id="timer">
-    <h2>Tid: </h2>
-  </div>
-  <div id="scores">
-    <h2>Poängställning</h2>
-    <div id="scoreList"></div>
-  </div>
-  <div id="winner" hidden="hidden">
-      <h1>Resultat!</h1>
-      <h2 id="winnerPlayer"></h2>
-      <p id="winnerScore"></p>
-  </div>
-<h1>Testa StartGame</h1>
-<button id="joinBtn">Gå med i spel</button>
+    <section class="panel">
+        <h1>Färgspel</h1>
+        <div id="grid"></div>
+    </section>
 
-<button id="startBtn" style="display:none;">Starta spel</button>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="panel" id="timer" hidden>
+            <h2>⏱ Tid kvar</h2>
+            <p id="timeValue">Väntar på start...</p>
+        </div>
 
-<p id="status">Status</p>
+        <div class="panel" id="scores">
+            <h2>Poängställning</h2>
+            <div id="scoreList"></div>
+        </div>
+
+        <div class="panel controls">
+            <button id="joinBtn">Gå med i spel</button>
+            <button id="startBtn" style="display:none;">Starta spel</button>
+            <p id="status">Status: Väntar på spelare...</p>
+        </div>
+
+        <div class="panel" id="winner" hidden="hidden">
+            <h2>Resultat</h2>
+            <p id="winnerPlayer"></p>
+            <p id="winnerScore"></p>
+        </div>
+    </aside>
+</div>
+
 </body>
 </html>
