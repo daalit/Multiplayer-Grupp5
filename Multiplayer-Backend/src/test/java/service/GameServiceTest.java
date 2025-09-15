@@ -43,16 +43,8 @@ public class GameServiceTest {
     void shouldStartGame() {
         
         when(gameManagerMock.getSession(testGameId)).thenReturn(gameSession);
-
-        //Injectar mockdatan som skapas setUp till GameService. 
-        try {
-            java.lang.reflect.Field gameManagerField = GameService.class.getDeclaredField("gameManager");
-            gameManagerField.setAccessible(true);
-            gameManagerField.set(gameService, gameManagerMock);
-        }catch(Exception e){
-            System.out.println("Error vid start av spel (TEST)");
-        }
-
+        injectGameManager();
+        
         gameService.startGame(testGameId);       
 
         //kolla att phase ändras
@@ -66,6 +58,52 @@ public class GameServiceTest {
 
         // verifiera att boradvast anropades
         verify(messagingServiceMock, atLeastOnce()).broadcast(anyString(), any());
+    }
+
+    @Test
+    void shouldEndGameAndCalculateScores(){        
+        when(gameManagerMock.getSession(testGameId)).thenReturn(gameSession);
+        injectGameManager();
+
+        //Lägger till spelare då så poäng kan sparas
+        String player1Color = gameSession.assignPlayer("player1");
+        String player2Color = gameSession.assignPlayer("player2");
+        
+
+        gameService.startGame(testGameId);
+
+        //kolla att phase ändras
+        assertEquals("running", gameSession.getPhase());
+        
+        //Lägger till rutor/poäng för spelarna. 
+        gameSession.updateCell(0, 0, player1Color);
+        gameSession.updateCell(0, 1, player1Color);
+        gameSession.updateCell(0, 2, player1Color);
+
+        gameSession.updateCell(0, 2, player2Color);
+       
+
+
+        //Avslutar spelet och kollar att det avslutats. 
+        gameService.endGame(testGameId);
+        assertEquals("ended", gameSession.getPhase());
+        
+       // assertEquals(player1Color + "=" + gameSession.getScores().get(player1Color) + ", " + player2Color + "=" + gameSession.getScores() , gameSession.getScores());
+        assertEquals("{red=2, green=1}", gameSession.getScores().toString());
+        verify(messagingServiceMock, atLeastOnce()).broadcast(anyString(), any());    
+}
+
+
+    private void injectGameManager(){
+        //Injectar mockdatan som skapas setUp till GameService. 
+        try {
+            java.lang.reflect.Field gameManagerField = GameService.class.getDeclaredField("gameManager");
+            gameManagerField.setAccessible(true);
+            gameManagerField.set(gameService, gameManagerMock);
+        }catch(Exception e){
+            System.out.println("Fel vid mockdata-injection");
+        }
+
     }
 
     // test 2 spelet ska ej kunna startas på nytt när de redan är startat
