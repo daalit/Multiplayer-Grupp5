@@ -51,6 +51,9 @@ function startTimer(endTime) {
   if (timerInterval) {
     clearInterval(timerInterval);
   }
+
+  // Visa timern när spelet startar
+    document.getElementById("timer").hidden = false;
     
   timerInterval = setInterval(() => {
     const now = Date.now();
@@ -72,7 +75,7 @@ function stopTimer() {
     clearInterval(timerInterval);
     timerInterval = null;
   }
-  timer.innerHTML = "<h2>Tid: Round ended!</h2>";
+  timer.innerHTML = "<h2>Round ended!</h2>";
 }
 
 // Renderar poängen
@@ -147,6 +150,7 @@ stompClient.connect({}, (frame) => {
       const data = JSON.parse(msg.body);
 
       if (data.type === "roundStart") {
+          document.getElementById("startBtn").style.display = "none";
         gameRunning = true;
         for (let r = 0; r < 15; r++) {
           for (let c = 0; c < 15; c++) {
@@ -154,6 +158,11 @@ stompClient.connect({}, (frame) => {
           }
         }
         renderGrid();
+        scores = {};
+        renderScores();
+        document.getElementById("winner").hidden = true;
+        document.getElementById("startBtn").style.display = "none";
+        stompClient.send(`/app/scores/${gameId}`, {})
         document.getElementById("status").innerText = "Game started!";
 
         startTimer(data.roundEndsAt);
@@ -161,10 +170,9 @@ stompClient.connect({}, (frame) => {
 
       if (data.type === "roundEnd") {console.log("roundEnd data", data);
         gameRunning = false;
-        document.getElementById("status").innerText = "Round ended!";
-                                     
-        stopTimer();        
-
+        stopTimer();
+        document.getElementById("startBtn").style.display = "block";
+        document.getElementById("status").innerText = " ";
         document.getElementById("winner").hidden = false;
         const elementWinner = document.getElementById("winnerPlayer");
         const elemetWinnerScore = document.getElementById("winnerScore");
