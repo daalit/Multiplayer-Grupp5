@@ -6,7 +6,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 public class GameSession {
+
+    @Autowired
+    public MessagingService messagingService;
 
     public static final int MAX_PLAYERS = 4;
     public static final int GRID_SIZE = 15;
@@ -17,6 +22,7 @@ public class GameSession {
     private final Map<String, Integer> scores;
     private String phase;
     private long roundEndsAt;
+    
 
     private final List<String> colors = Arrays.asList("red", "green", "yellow", "blue");
 
