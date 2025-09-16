@@ -42,6 +42,8 @@ public class GameService {
             }
         }
 
+        session.resetGrid();
+
         session.setPhase("running");
         session.setRoundEndsAt(System.currentTimeMillis() + roundMs);
 
@@ -55,7 +57,9 @@ public class GameService {
         // där av behöver vi delegera den istället
         messagingService.broadcast("/topic/game/" + gameId, Map.of(
                 "type", "roundStart",
-                "roundEndsAt", session.getRoundEndsAt()));
+                "roundEndsAt", session.getRoundEndsAt(),
+                "scores", new HashMap<String, Integer>()
+        ));
 
         // Thread låter spelet köra i 30 sekunder innan vi kör metoden endGame -
        if (!testMode) {
