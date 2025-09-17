@@ -2,11 +2,18 @@
 Multiplayer grupp 5 - Färgspel
 
 **Java 17**
+
 **Maven**
+
 **Dependencies**
-Websocket
-Spring boot dev tools
-Spring Web
+
+- Websocket
+
+- Spring boot dev tools
+
+- Spring Web
+
+
 
 
 **GAME URL**
