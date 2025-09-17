@@ -16,7 +16,7 @@ public class GameManager {
     public synchronized GameSession assignPlayerToSession(String playerSessionId) {
         // Hittar en session som inte är full
         for (GameSession session : sessions.values()) {
-            if (!session.isFull()) {
+            if (!session.isFull() && session.getPhase().equals("lobby")) {
                 session.assignPlayer(playerSessionId);
                 return session;
             }
