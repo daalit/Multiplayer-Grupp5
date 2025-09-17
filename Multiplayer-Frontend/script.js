@@ -1,4 +1,5 @@
-const socket = new SockJS("http://localhost:8080/websocket");
+const backendUrl = window.location.origin.replace(/:\d+$/, "") + ":8080";
+const socket = new SockJS(`${backendUrl}/websocket`);
 const stompClient = Stomp.over(socket);
 
 const gridElement = document.getElementById("grid");
