@@ -152,17 +152,21 @@ stompClient.connect({}, (frame) => {
       if (data.type === "roundStart") {
           document.getElementById("startBtn").style.display = "none";
         gameRunning = true;
+
+        //rensa spelplan
         for (let r = 0; r < 15; r++) {
           for (let c = 0; c < 15; c++) {
             gridState[r][c] = null;
           }
         }
         renderGrid();
+
+        //rensa poäng direkt i UI
         scores = {};
         renderScores();
+
         document.getElementById("winner").hidden = true;
         document.getElementById("startBtn").style.display = "none";
-        stompClient.send(`/app/scores/${gameId}`, {})
         document.getElementById("status").innerText = "Game started!";
 
         startTimer(data.roundEndsAt);
