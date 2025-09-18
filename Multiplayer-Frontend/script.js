@@ -1,6 +1,13 @@
 const loc = window.location;
 const protocol = loc.protocol === "https:" ? "https" : "http";
-const backendUrl = `${protocol}://${loc.hostname}`; // ingen :8080!
+
+let backendUrl;
+if (loc.hostname === "localhost") {
+    backendUrl = `${protocol}://${loc.hostname}:8080`;
+} else {
+    backendUrl = `${protocol}://${loc.hostname}`;
+}
+
 const socket = new SockJS(`${backendUrl}/websocket`);
 const stompClient = Stomp.over(socket);
 
