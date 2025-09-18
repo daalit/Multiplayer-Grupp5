@@ -16,7 +16,7 @@ Multiplayer grupp 5 - Färgspel
 
 
 
-**GAME URL**
+**GAME URL :** https://seal-app-gg7f8.ondigitalocean.app/ 
 
 
 **Game Overview**
